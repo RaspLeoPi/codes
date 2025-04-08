@@ -39,7 +39,9 @@ class Linear(Layer):
         input: [batch_size, in_dim]
         out: [batch_size, out_dim]
         """
-        pass
+        self.input = X
+        output = X * self.W + self.b
+        return output      # implicit brocasting of b
 
     def backward(self, grad : np.ndarray):
         """
@@ -47,7 +49,16 @@ class Linear(Layer):
         output: [batch_size, in_dim] the grad to be passed to the previous layer.
         This function also calculates the grads for W and b.
         """
-        pass
+        # method 1 to compute W: memory-friendly
+        tmp = np.zeros_like(self.W)
+        batch_size, out_dim = grad.shape
+        for i in range(batch_size):
+            for j in range(out_dim):
+                tmp[:, j] = grad[i, j] * self.input[i, ].T
+        self.grads['W'] = tmp
+        self.grads['b'] = np.sum(grad, axis=0)     # grad * identity
+        output = grad * self.W.T
+        return output
     
     def clear_grad(self):
         self.grads = {'W' : None, 'b' : None}
