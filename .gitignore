@@ -1,3 +1,6 @@
 # cache directories
 draw_tools/__pycache__
 mynn/__pychache__
+
+# some other files
+idx.pickle

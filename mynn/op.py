@@ -40,7 +40,7 @@ class Linear(Layer):
         out: [batch_size, out_dim]
         """
         self.input = X
-        output = X * self.W + self.b
+        output = X @ self.W + self.b
         return output      # implicit brocasting of b
 
     def backward(self, grad : np.ndarray):
@@ -54,10 +54,10 @@ class Linear(Layer):
         batch_size, out_dim = grad.shape
         for i in range(batch_size):
             for j in range(out_dim):
-                tmp[:, j] = grad[i, j] * self.input[i, ].T
+                tmp[:, j] = grad[i, j] @ self.input[i, ].T
         self.grads['W'] = tmp
-        self.grads['b'] = np.sum(grad, axis=0)     # grad * identity
-        output = grad * self.W.T
+        self.grads['b'] = np.sum(grad, axis=0)     # grad @ identity
+        output = grad @ self.W.T
         return output
     
     def clear_grad(self):
@@ -118,7 +118,14 @@ class MultiCrossEntropyLoss(Layer):
     A multi-cross-entropy loss layer, with Softmax layer in it, which could be cancelled by method cancel_softmax
     """
     def __init__(self, model = None, max_classes = 10) -> None:
-        pass
+        self.model = model
+        self.has_softmax = True     # enable by default
+        self.max_classes = max_classes
+        self.predicts = None        # the input
+        self.labels = None          # the labels
+        self.grads = None           # the grads of the layer
+        self.softmax_out = None     # the output of softmax layer
+
 
     def __call__(self, predicts, labels):
         return self.forward(predicts, labels)
@@ -129,12 +136,37 @@ class MultiCrossEntropyLoss(Layer):
         labels : [batch_size, ]
         This function generates the loss.
         """
-        # / ---- your codes here ----/
-        pass
+        self.predicts = predicts
+        self.labels = labels
+        batch_size, = labels.shape
+        if not self.has_softmax:    # do not need softmax
+            output = np.mean(-np.log(predicts[np.arange(batch_size), labels]))
+        else:                       # pass an extra function
+            self.softmax_out = softmax(predicts)
+            output = np.mean(-np.log(self.softmax_out[np.arange(batch_size), labels]))
+        return output
     
     def backward(self):
         # first compute the grads from the loss to the input
-        # / ---- your codes here ----/
+        # create a set of one-hot vectors first
+        batch_size = len(self.labels)
+        labels_vec = np.zeros(batch_size, self.max_classes)
+        labels_vec[np.arange(batch_size), self.labels] = 1   
+        if not self.has_softmax:
+            # no softmax layer, simple gradient
+            self.grads = labels_vec / (-self.predicts)
+        else:
+            # two steps
+            # self.grads = np.empty_like(self.predicts)
+            self.grads = labels_vec / (-self.softmax_out)
+            for i in range(batch_size):     # use the ith sample
+                softmax_grad = np.empty((self.max_classes, self.max_classes))
+                x_max = np.max(self.predicts[i, :]) 
+                x_exp = np.exp(self.predicts[i, :] - x_max)     # one-dim vector
+                partition = np.sum(x_exp)       # scalar
+                output = x_exp / partition
+                softmax_grad = np.diag(output) - np.outer(output, output)
+                self.grads[i, :] = self.grads[i, :] @ softmax_grad
         # Then send the grads to model for back propagation
         self.model.backward(self.grads)
 
