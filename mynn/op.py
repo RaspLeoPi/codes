@@ -41,7 +41,7 @@ class Linear(Layer):
         """
         self.input = X
         output = X @ self.W + self.b
-        return output      # implicit brocasting of b
+        return output      # implicit broadcasting of b
 
     def backward(self, grad : np.ndarray):
         """
@@ -54,7 +54,7 @@ class Linear(Layer):
         batch_size, out_dim = grad.shape
         for i in range(batch_size):
             for j in range(out_dim):
-                tmp[:, j] = grad[i, j] @ self.input[i, ].T
+                tmp[:, j] += grad[i, j] * self.input[i, ].T
         self.grads['W'] = tmp
         self.grads['b'] = np.sum(grad, axis=0)     # grad @ identity
         output = grad @ self.W.T
@@ -150,7 +150,7 @@ class MultiCrossEntropyLoss(Layer):
         # first compute the grads from the loss to the input
         # create a set of one-hot vectors first
         batch_size = len(self.labels)
-        labels_vec = np.zeros(batch_size, self.max_classes)
+        labels_vec = np.zeros((batch_size, self.max_classes))
         labels_vec[np.arange(batch_size), self.labels] = 1   
         if not self.has_softmax:
             # no softmax layer, simple gradient
