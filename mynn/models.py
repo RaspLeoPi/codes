@@ -21,7 +21,7 @@ class Model_MLP(Layer):
                 elif act_func == 'ReLU':
                     layer_f = ReLU()
                 self.layers.append(layer)
-                if i < len(size_list) - 2:
+                if i < len(size_list) - 1:
                     self.layers.append(layer_f)
 
     def __call__(self, X):
