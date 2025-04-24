@@ -18,14 +18,19 @@ class Linear(Layer):
     """
     The linear layer for a neural network. You need to implement the forward function and the backward function.
     """
-    def __init__(self, in_dim, out_dim, initialize_method=np.random.normal, weight_decay=False, weight_decay_lambda=1e-8) -> None:
+    def __init__(self, in_dim, out_dim, moment = False, initialize_method=np.random.normal, weight_decay=False, weight_decay_lambda=1e-8) -> None:
         super().__init__()
-        self.W = initialize_method(size=(in_dim, out_dim))
-        self.b = initialize_method(size=(1, out_dim))
+        # self.W = initialize_method(size=(in_dim, out_dim))
+        # self.W /= np.sqrt(np.sum(self.W**2))                # normalization 
+        # self.b = initialize_method(size=(1, out_dim))
         self.grads = {'W' : None, 'b' : None}
+        if moment:
+            self.velocity = {'W' : np.zeros((in_dim, out_dim)), 'b' : np.zeros((1, out_dim))}
         self.input = None # Record the input for backward process.
 
-        self.params = {'W' : self.W, 'b' : self.b}
+        self.params = {}
+        self.params['W'] = initialize_method(size=(in_dim, out_dim))
+        self.params['b'] = initialize_method(size=(1, out_dim))
 
         self.weight_decay = weight_decay # whether using weight decay
         self.weight_decay_lambda = weight_decay_lambda # control the intensity of weight decay
@@ -39,8 +44,8 @@ class Linear(Layer):
         input: [batch_size, in_dim]
         out: [batch_size, out_dim]
         """
-        self.input = X
-        output = X @ self.W + self.b
+        self.input = X                          # record the input for using in backward method
+        output = X @ self.params['W'] + self.params['b']            # affine transformation
         return output      # implicit broadcasting of b
 
     def backward(self, grad : np.ndarray):
@@ -50,14 +55,14 @@ class Linear(Layer):
         This function also calculates the grads for W and b.
         """
         # method 1 to compute W: memory-friendly
-        tmp = np.zeros_like(self.W)
-        batch_size, out_dim = grad.shape
-        for i in range(batch_size):
-            for j in range(out_dim):
-                tmp[:, j] += grad[i, j] * self.input[i, ].T
-        self.grads['W'] = tmp
-        self.grads['b'] = np.sum(grad, axis=0)     # grad @ identity
-        output = grad @ self.W.T
+        # tmp = np.zeros_like(self.W)
+        # batch_size, out_dim = grad.shape
+        # for i in range(batch_size):
+        #     for j in range(out_dim):
+        #         tmp[:, j] += grad[i, j] * self.input[i, ]        # X = self.input
+        self.grads['W'] = self.input.T @ grad       # simplified formula
+        self.grads['b'] = np.sum(grad, axis=0, keepdims=True)     # grad @ identity
+        output = grad @ self.params['W'].T
         return output
     
     def clear_grad(self):
@@ -142,8 +147,8 @@ class MultiCrossEntropyLoss(Layer):
         if not self.has_softmax:    # do not need softmax
             output = np.mean(-np.log(predicts[np.arange(batch_size), labels]))
         else:                       # pass an extra function
-            self.softmax_out = softmax(predicts)
-            output = np.mean(-np.log(self.softmax_out[np.arange(batch_size), labels]))
+            self.softmax_out = softmax(predicts)    # [batch_size, D]
+            output = np.mean(-np.log(self.softmax_out[np.arange(batch_size), labels] + 1e-10))
         return output
     
     def backward(self):
@@ -154,19 +159,19 @@ class MultiCrossEntropyLoss(Layer):
         labels_vec[np.arange(batch_size), self.labels] = 1   
         if not self.has_softmax:
             # no softmax layer, simple gradient
-            self.grads = labels_vec / (-self.predicts)
+            self.grads = labels_vec / (-self.predicts) / batch_size
         else:
             # two steps
             # self.grads = np.empty_like(self.predicts)
-            self.grads = labels_vec / (-self.softmax_out)
-            for i in range(batch_size):     # use the ith sample
-                softmax_grad = np.empty((self.max_classes, self.max_classes))
-                x_max = np.max(self.predicts[i, :]) 
-                x_exp = np.exp(self.predicts[i, :] - x_max)     # one-dim vector
-                partition = np.sum(x_exp)       # scalar
-                output = x_exp / partition
-                softmax_grad = np.diag(output) - np.outer(output, output)
-                self.grads[i, :] = self.grads[i, :] @ softmax_grad
+            self.grads = (self.softmax_out - labels_vec) / batch_size     # simplified ver.
+            # for i in range(batch_size):     # use the ith sample
+            #     # softmax_grad = np.empty((self.max_classes, self.max_classes))
+            #     # x_max = np.max(self.predicts[i, :]) 
+            #     # x_exp = np.exp(self.predicts[i, :] - x_max)     # one-dim vector
+            #     # partition = np.sum(x_exp)       # scalar
+            #     output = self.softmax_out[i, :]
+            #     softmax_grad = np.diag(output) - np.outer(output, output)
+            #     self.grads[i, :] = self.grads[i, :] @ softmax_grad
         # Then send the grads to model for back propagation
         self.model.backward(self.grads)
 
