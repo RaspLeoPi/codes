@@ -21,7 +21,7 @@ class Model_MLP(Layer):
                 elif act_func == 'ReLU':
                     layer_f = ReLU()
                 self.layers.append(layer)
-                if i < len(size_list) - 1:
+                if i < len(size_list) - 2:
                     self.layers.append(layer_f)
 
     def __call__(self, X):
@@ -38,6 +38,7 @@ class Model_MLP(Layer):
         grads = loss_grad
         for layer in reversed(self.layers):
             grads = layer.backward(grads)
+        # print(f"Final norm of grad: {np.sqrt(np.sum(grads**2))}")
         return grads
 
     def load_model(self, param_list):
@@ -76,22 +77,136 @@ class Model_MLP(Layer):
 
 class Model_CNN(Layer):
     """
-    A model with conv2D layers. Implement it using the operators you have written in op.py
+    A convolutional neural network model for image classification.
+    
+    Default architecture for MNIST (28x28 grayscale images):
+    - Conv1: 1->32 channels, 3x3 kernel
+    - ReLU
+    - Conv2: 32->64 channels, 3x3 kernel  
+    - ReLU
+    - Linear: 64*5*5 -> 10 (for MNIST classes)
+    
+    Parameters:
+        conv_params (list[dict]): List of convolution layer parameters.
+            Defaults to MNIST architecture if None.
+            Each dict contains:
+            - in_channels (int)
+            - out_channels (int)
+            - kernel_size (int)
+            - stride (int, optional): Default 1
+            - padding (int, optional): Default 0
+            - lambda (float, optional): Weight decay lambda
+            
+        linear_size (tuple[int,int]): Input/output dims for linear layer.
+            Default (64*5*5, 10) for MNIST.
+            
+        act_func (str): Activation function ('ReLU' supported)
     """
-    def __init__(self):
-        pass
+    def __init__(self, conv_params=None, linear_size=None, act_func='ReLU'):
+        # Default MNIST architecture
+        if conv_params is None:
+            conv_params = [
+                {'in_channels':1, 'out_channels':32, 'kernel_size':3},
+                {'in_channels':32, 'out_channels':64, 'kernel_size':3}
+            ]
+        if linear_size is None:
+            linear_size = (64*5*5, 10)
+            
+        self.conv_params = conv_params
+        self.linear_size = linear_size
+        self.act_func = act_func
+        self.layers = []
+        
+        # Build convolutional layers
+        for params in conv_params:
+            layer = conv2D(
+                in_channels=params['in_channels'],
+                out_channels=params['out_channels'],
+                kernel_size=params['kernel_size'],
+                stride=params.get('stride', 1),
+                padding=params.get('padding', 0),
+                weight_decay='lambda' in params,
+                weight_decay_lambda=params.get('lambda', 1e-8)
+            )
+            self.layers.append(layer)
+            self.layers.append(ReLU())
+            
+        # Add final linear layer
+        self.layers.append(Linear(
+            in_dim=linear_size[0],
+            out_dim=linear_size[1],
+            weight_decay='lambda' in conv_params[-1],
+            weight_decay_lambda=conv_params[-1].get('lambda', 1e-8)
+        ))
 
     def __call__(self, X):
         return self.forward(X)
 
     def forward(self, X):
-        pass
+        if not self.layers:
+            raise ValueError('Model not initialized. Provide conv_params and linear_size')
+            
+        outputs = X
+        for layer in self.layers:
+            outputs = layer(outputs)
+        return outputs
 
     def backward(self, loss_grad):
-        pass
+        grads = loss_grad
+        for layer in reversed(self.layers):
+            grads = layer.backward(grads)
+        return grads
     
     def load_model(self, param_list):
-        pass
+        with open(param_list, 'rb') as f:
+            param_list = pickle.load(f)
+            
+        self.conv_params = param_list[0]
+        self.linear_size = param_list[1]
+        self.act_func = param_list[2]
+        self.layers = []
+        
+        # Reconstruct conv layers
+        for i, params in enumerate(self.conv_params):
+            layer = conv2D(
+                in_channels=params['in_channels'],
+                out_channels=params['out_channels'],
+                kernel_size=params['kernel_size'],
+                stride=params.get('stride', 1),
+                padding=params.get('padding', 0)
+            )
+            layer.W = param_list[i+3]['W']
+            layer.b = param_list[i+3]['b']
+            self.layers.append(layer)
+            self.layers.append(ReLU())
+            
+        # Reconstruct linear layer
+        linear_layer = Linear(
+            in_dim=self.linear_size[0],
+            out_dim=self.linear_size[1]
+        )
+        linear_layer.params['W'] = param_list[-1]['W']
+        linear_layer.params['b'] = param_list[-1]['b']
+        self.layers.append(linear_layer)
         
     def save_model(self, save_path):
-        pass
+        param_list = [self.conv_params, self.linear_size, self.act_func]
+        
+        # Save conv layer weights
+        for layer in self.layers:
+            if hasattr(layer, 'W'):  # conv2D layer
+                param_list.append({
+                    'W': layer.W,
+                    'b': layer.b
+                })
+                
+        # Save linear layer weights
+        for layer in self.layers:
+            if hasattr(layer, 'params'):  # Linear layer
+                param_list.append({
+                    'W': layer.params['W'],
+                    'b': layer.params['b']
+                })
+        
+        with open(save_path, 'wb') as f:
+            pickle.dump(param_list, f)
