@@ -18,10 +18,9 @@ class Linear(Layer):
     """
     The linear layer for a neural network. You need to implement the forward function and the backward function.
     """
-    def __init__(self, in_dim, out_dim, moment = False, initialize_method=np.random.normal, weight_decay=False, weight_decay_lambda=1e-8) -> None:
+    def __init__(self, in_dim, out_dim, initialize_method=np.random.normal, weight_decay=False, weight_decay_lambda=1e-8) -> None:
+        super().__init__()
         self.grads = {'W' : None, 'b' : None}
-        if moment:
-            self.velocity = {'W' : np.zeros((in_dim, out_dim)), 'b' : np.zeros((1, out_dim))}
         self.input = None # Record the input for backward process.
 
         self.params = {}
@@ -51,6 +50,8 @@ class Linear(Layer):
         This function also calculates the grads for W and b.
         """
         self.grads['W'] = self.input.T @ grad       # simplified formula
+        if self.weight_decay:
+            self.grads['W'] += self.weight_decay_lambda * self.params['W']
         self.grads['b'] = np.sum(grad, axis=0, keepdims=True)     # grad @ identity
         output = grad @ self.params['W'].T
         return output
@@ -65,6 +66,7 @@ class conv2D(Layer):
     stride, padding, and weight initialization method.
     """
     def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, initialize_method=np.random.normal, weight_decay=False, weight_decay_lambda=1e-8) -> None:
+        super().__init__()
         # Initialize the number of input and output channels, the kernel size, stride, and padding
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -76,6 +78,9 @@ class conv2D(Layer):
         # Weights shape: [out_channels, in_channels, kernel_size, kernel_size]
         self.W = initialize_method(0, 1, (out_channels, in_channels, kernel_size, kernel_size))
         self.b = initialize_method(0, 1, (out_channels, 1, 1))  # Bias shape: [out_channels, 1, 1]
+
+        # used in updating parameters in optimizer.py
+        self.params = {'W': self.W, 'b': self.b}
         
         # Initialize gradients for weights and bias
         self.grads = {'W': None, 'b': None}
@@ -154,7 +159,7 @@ class conv2D(Layer):
         """
         # Extract dimensions
         batch_size, out_channels, new_H, new_W = grads.shape
-        _, in_channels, H, W = self.X.shape
+        # _, in_channels, H, W = self.X.shape       # unused line. 
         kernel_size = self.kernel_size
         
         # Apply padding to the input
@@ -280,6 +285,107 @@ class MultiCrossEntropyLoss(Layer):
         self.has_softmax = False
         return self
     
+class MaxPool2D(Layer):
+    """
+    2D Max Pooling layer that performs downsampling by taking the maximum value
+    over a spatial window for each channel.
+    
+    Args:
+        pool_size (int): Size of the pooling window (square)
+        stride (int, optional): Stride of the pooling operation. Defaults to pool_size.
+        padding (int, optional): Zero padding to add around input. Default 0.
+    """
+    def __init__(self, pool_size=2, stride=None, padding=0):
+        super().__init__()
+        self.pool_size = pool_size
+        self.stride = stride if stride is not None else pool_size
+        self.padding = padding
+        self.input = None
+        self.max_indices = None  # To store locations of max values for backprop
+        self.optimizable = False  # No learnable parameters
+
+    def __call__(self, X):
+        return self.forward(X)
+
+    def forward(self, X):
+        """
+        Forward pass of max pooling.
+        
+        Args:
+            X (np.ndarray): Input tensor of shape [batch, channels, height, width]
+            
+        Returns:
+            np.ndarray: Output tensor after max pooling
+        """
+        self.input = X
+        
+        # Apply padding if needed
+        if self.padding > 0:
+            X = np.pad(X, ((0,0), (0,0), (self.padding, self.padding), 
+                          (self.padding, self.padding)), mode='constant')
+        
+        batch, channels, height, width = X.shape
+        out_h = (height - self.pool_size) // self.stride + 1
+        out_w = (width - self.pool_size) // self.stride + 1
+        
+        output = np.zeros((batch, channels, out_h, out_w))
+        self.max_indices = np.zeros((batch, channels, out_h, out_w, 2), dtype=np.int32)
+        
+        for b in range(batch):
+            for c in range(channels):
+                for i in range(out_h):
+                    for j in range(out_w):
+                        h_start = i * self.stride
+                        h_end = h_start + self.pool_size
+                        w_start = j * self.stride 
+                        w_end = w_start + self.pool_size
+                        
+                        window = X[b, c, h_start:h_end, w_start:w_end]
+                        output[b, c, i, j] = np.max(window)
+                        
+                        # Store location of max value for backprop
+                        max_idx = np.unravel_index(np.argmax(window), window.shape)
+                        self.max_indices[b, c, i, j] = [h_start + max_idx[0], 
+                                                       w_start + max_idx[1]]
+        
+        return output
+
+    def backward(self, grads):
+        """
+        Backward pass of max pooling.
+        
+        Args:
+            grads (np.ndarray): Gradient of loss w.r.t. output, shape [batch, channels, out_h, out_w]
+            
+        Returns:
+            np.ndarray: Gradient of loss w.r.t. input
+        """
+        batch, channels, out_h, out_w = grads.shape
+        _, _, height, width = self.input.shape
+        
+        # Initialize output gradient with zeros
+        dX = np.zeros_like(self.input)
+        
+        # Apply padding if needed
+        if self.padding > 0:
+            pad_width = ((0,0), (0,0), (self.padding, self.padding), 
+                        (self.padding, self.padding))
+            dX = np.pad(dX, pad_width, mode='constant')
+        
+        # Distribute gradients only to max locations
+        for b in range(batch):
+            for c in range(channels):
+                for i in range(out_h):
+                    for j in range(out_w):
+                        h, w = self.max_indices[b, c, i, j]
+                        dX[b, c, h, w] += grads[b, c, i, j]
+        
+        # Remove padding if applied
+        if self.padding > 0:
+            dX = dX[:, :, self.padding:-self.padding, self.padding:-self.padding]
+            
+        return dX
+
 class L2Regularization(Layer):
     """
     L2 Reg can act as weight decay that can be implemented in class Linear.
