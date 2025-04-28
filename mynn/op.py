@@ -151,10 +151,12 @@ class conv2D(Layer):
         The backward pass of the 2D convolutional layer.
         
         Args:
-            grads (np.ndarray): Gradient of the loss with respect to the output of the layer, shape [batch_size, out_channels, new_H, new_W]
+            grads (np.ndarray): Gradient of the loss with respect to the output of the layer, 
+            shape [batch_size, out_channels, new_H, new_W]
         
         Returns:
-            np.ndarray: Gradient of the loss with respect to the input of the layer, shape [batch_size, in_channels, H, W]
+            np.ndarray: Gradient of the loss with respect to the input of the layer, 
+            shape [batch_size, in_channels, H, W]
         """
         # Extract dimensions
         batch_size, out_channels, new_H, new_W = grads.shape
