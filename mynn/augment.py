@@ -56,9 +56,10 @@ def random_zoom(image, min_scale=0.9, max_scale=1.1):
         start_w = (zoomed.shape[1] - w) // 2
         zoomed = zoomed[start_h:start_h+h, start_w:start_w+w]
     else:  # Pad with zeros
-        pad_h = (h - zoomed.shape[0]) // 2
-        pad_w = (w - zoomed.shape[1]) // 2
-        zoomed = np.pad(zoomed, ((pad_h, pad_h), (pad_w, pad_w)), mode='constant')
+        pad_h = (h - zoomed.shape[0]) / 2
+        pad_w = (w - zoomed.shape[1]) / 2
+        zoomed = np.pad(zoomed, ((np.floor(pad_h).astype(int), np.ceil(pad_h).astype(int)),
+                                (np.floor(pad_w).astype(int), np.ceil(pad_w).astype(int))), mode='constant')
     
     return zoomed.reshape(-1)
 
