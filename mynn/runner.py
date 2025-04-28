@@ -26,6 +26,7 @@ class RunnerM():
         log_iters = kwargs.get("log_iters", 100)
         save_dir = kwargs.get("save_dir", "best_model")
         model_name = kwargs.get("model_name", "best_model")
+        detail_eval = kwargs.get("detail_eval", True)
 
         if not os.path.exists(save_dir):
             os.mkdir(save_dir)
@@ -60,17 +61,18 @@ class RunnerM():
                 if self.scheduler is not None:
                     self.scheduler.step()
                 
-                dev_score, dev_loss = self.evaluate(dev_set)
-                self.dev_scores.append(dev_score)
-                self.dev_loss.append(dev_loss)
+                if detail_eval: 
+                    dev_score, dev_loss = self.evaluate(dev_set)
 
                 if (iteration) % log_iters == 0:
-                    # dev_score, dev_loss = self.evaluate(dev_set)
-                    # self.dev_scores.append(dev_score)
-                    # self.dev_loss.append(dev_loss)
+                    if not detail_eval:
+                        dev_score, dev_loss = self.evaluate(dev_set)
                     print(f"epoch: {epoch}, iteration: {iteration}")
                     print(f"[Train] loss: {trn_loss}, score: {trn_score}")
                     print(f"[Dev] loss: {dev_loss}, score: {dev_score}")
+
+                self.dev_scores.append(dev_score)
+                self.dev_loss.append(dev_loss)                    
 
             if dev_score > best_score:
                 save_path = os.path.join(save_dir, f'{model_name}.pickle')
