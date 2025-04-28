@@ -126,24 +126,22 @@ class conv2D(Layer):
         new_H = (H + 2 * self.padding - self.kernel_size) // self.stride + 1
         new_W = (W + 2 * self.padding - self.kernel_size) // self.stride + 1
         
-        # Initialize the output matrix with zeros
+        # Initialize the output matrix
         output = np.zeros((batch_size, self.out_channels, new_H, new_W))
         
-        # Perform convolution
-        for i in range(batch_size):
-            for j in range(self.out_channels):
-                for k in range(new_H):
-                    for l in range(new_W):
-                        h_start = k * self.stride
-                        h_end = h_start + self.kernel_size
-                        w_start = l * self.stride
-                        w_end = w_start + self.kernel_size
-                        
-                        # Extract the region from input image
-                        X_slice = X_padded[i, :, h_start:h_end, w_start:w_end]
-                        
-                        # Perform element-wise multiplication and sum (convolution operation)
-                        output[i, j, k, l] = np.sum(X_slice * self.W[j, :, :, :]) + self.b[j]
+        # Vectorized convolution implementation
+        for k in range(new_H):
+            for l in range(new_W):
+                h_start = k * self.stride
+                h_end = h_start + self.kernel_size
+                w_start = l * self.stride
+                w_end = w_start + self.kernel_size
+                
+                # Extract all batch and channel slices at once
+                X_slice = X_padded[:, :, h_start:h_end, w_start:w_end]
+                
+                # Vectorized computation across output channels
+                output[:, :, k, l] = np.tensordot(X_slice, self.W, axes=([1,2,3],[1,2,3])) + self.b.squeeze()
         
         return output
 
@@ -159,36 +157,34 @@ class conv2D(Layer):
         """
         # Extract dimensions
         batch_size, out_channels, new_H, new_W = grads.shape
-        # _, in_channels, H, W = self.X.shape       # unused line. 
         kernel_size = self.kernel_size
         
         # Apply padding to the input
         X_padded = np.pad(self.X, ((0, 0), (0, 0), (self.padding, self.padding), (self.padding, self.padding)), mode='constant')
         
-        # Initialize gradients for weights, bias, and input
+        # Initialize gradients
         dW = np.zeros_like(self.W)
-        db = np.zeros_like(self.b)
+        db = np.sum(grads, axis=(0,2,3)).reshape(-1, 1, 1)  # Sum over batch and spatial dims
         dX_padded = np.zeros_like(X_padded)
         
-        # Perform backpropagation
-        for i in range(batch_size):
-            for j in range(out_channels):
-                for k in range(new_H):
-                    for l in range(new_W):
-                        h_start = k * self.stride
-                        h_end = h_start + kernel_size
-                        w_start = l * self.stride
-                        w_end = w_start + kernel_size
-                        
-                        # Extract the region from input image
-                        X_slice = X_padded[i, :, h_start:h_end, w_start:w_end]
-                        
-                        # Add gradient of output to the gradient of weights and bias
-                        dW[j, :, :, :] += X_slice * grads[i, j, k, l]
-                        db[j] += grads[i, j, k, l]
-                        
-                        # Update the gradient of the input region
-                        dX_padded[i, :, h_start:h_end, w_start:w_end] += self.W[j, :, :, :] * grads[i, j, k, l]
+        # Vectorized backpropagation
+        for k in range(new_H):
+            for l in range(new_W):
+                h_start = k * self.stride
+                h_end = h_start + kernel_size
+                w_start = l * self.stride
+                w_end = w_start + kernel_size
+                
+                # Get all input regions at once
+                X_regions = X_padded[:, :, h_start:h_end, w_start:w_end]
+                
+                # Vectorized weight gradient update
+                dW += np.tensordot(grads[:, :, k, l], X_regions, axes=([0],[0]))
+                
+                # Vectorized input gradient update
+                dX_padded[:, :, h_start:h_end, w_start:w_end] += np.tensordot(
+                    grads[:, :, k, l], self.W, axes=([1],[0])
+                )
         
         # Extract the gradient of the input without padding
         dX = dX_padded[:, :, self.padding:-self.padding, self.padding:-self.padding]
@@ -385,6 +381,37 @@ class MaxPool2D(Layer):
             dX = dX[:, :, self.padding:-self.padding, self.padding:-self.padding]
             
         return dX
+
+class Flatten(Layer):
+    """
+    Flatten layer that reshapes input to 2D (batch_size, -1)
+    
+    Forward pass:
+        Y = reshape(X, (batch_size, -1))
+        where X is input tensor of shape (batch_size, ...)
+    
+    Backward pass:
+        dL/dX = reshape(dL/dY, original_input_shape)
+        Since flattening is just a reshape operation,
+        the gradient flows backward by reshaping to original dimensions
+    """
+    def __init__(self) -> None:
+        super().__init__()
+        self.optimizable = False
+        self.input_shape = None
+        
+    def __call__(self, X):
+        return self.forward(X)
+        
+    def forward(self, X):
+        self.input_shape = X.shape
+        return X.reshape(X.shape[0], -1)
+        
+    def backward(self, grad):
+        # Gradient flows backward by reshaping to original input dimensions
+        # This is mathematically correct since:
+        # ∂L/∂X_ijk... = ∂L/∂Y_ij where Y = flatten(X)
+        return grad.reshape(self.input_shape)
 
 class L2Regularization(Layer):
     """
