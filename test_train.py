@@ -227,7 +227,7 @@ def test5():
             act_func='ReLU'
         )
         
-        optimizer = nn.optimizer.SGD(init_lr=0.06, model=cnn_model)
+        optimizer = nn.optimizer.SGD(init_lr=0.01, model=cnn_model)
         scheduler = nn.lr_scheduler.MultiStepLR(
             optimizer=optimizer,
             milestones=[800, 2400, 4000],
@@ -328,7 +328,8 @@ def test6():
             num_epochs=5,
             log_iters=300,              # dev evaluation for every 300 iterations
             save_dir=r'./best_models',
-            model_name='test6'
+            model_name='test6', 
+            detail_eval=False
         )
 
         _, axes = plt.subplots(1, 2)
@@ -338,17 +339,99 @@ def test6():
 
         plt.show()
 
+
+def test7():
+        """
+        implementation of CNN with bigger kernel
+        layers: conv1->ReLU->maxpool->conv2->ReLU->maxpool->Flatten->linear->Softmax->CrossEntropy
+        dimension: 28*28*1->24*24*16->12*12*16->8*8*32->4*4*32->10
+        optimizer: SGD
+        ...
+        """
+        print("=== test 7 is on the way ===")
+        # Reshape input from (batch, 784) to (batch, 1, 28, 28)
+        train_imgs_cnn = train_imgs.reshape(-1, 1, 28, 28)
+        valid_imgs_cnn = valid_imgs.reshape(-1, 1, 28, 28)
+        
+        # Define CNN architecture with pooling
+        conv_params = [
+            {
+                'in_channels': 1,
+                'out_channels': 16,
+                'kernel_size': 5,
+                'pool_params': {'pool_size': 2, 'stride': 2}
+            },
+            {
+                'in_channels': 16,
+                'out_channels': 32, 
+                'kernel_size': 5,
+                'pool_params': {'pool_size': 2, 'stride': 2}
+            }
+        ]
+        
+        cnn_model = nn.models.Model_CNN(
+            conv_params=conv_params,
+            num_classes=10,
+            act_func='ReLU'
+        )
+        
+        optimizer = nn.optimizer.SGD(init_lr=0.01, model=cnn_model)
+        scheduler = nn.lr_scheduler.MultiStepLR(
+            optimizer=optimizer,
+            milestones=[800, 2400, 4000],
+            gamma=0.5
+        )
+        loss_fn = nn.op.MultiCrossEntropyLoss(
+            model=cnn_model,
+            max_classes=train_labs.max()+1
+        )
+
+        runner = nn.runner.RunnerM(
+            cnn_model,
+            optimizer,
+            nn.metric.accuracy,
+            loss_fn,
+            scheduler=scheduler
+        )
+
+        runner.train(
+            [train_imgs_cnn, train_labs],
+            [valid_imgs_cnn, valid_labs],
+            num_epochs=5,
+            log_iters=300,              # dev evaluation for every 300 iterations
+            save_dir=r'./best_models',
+            model_name='test5', 
+            detail_eval=False
+        )
+
+        _, axes = plt.subplots(1, 2)
+        axes.reshape(-1)
+        _.set_tight_layout(1)
+        plot(runner, axes)
+
+        plt.show()
+        pass
+
+def test8():
+        
+        pass
+
+def test9():
+
+        pass
+
 test_mapping = {
-        "test1": test1, 
-        "test2": test2, 
-        "test3": test3, 
-        "test4": test4,
-        "test5": test5, 
-        "test6": test6
+        "1": test1, 
+        "2": test2, 
+        "3": test3, 
+        "4": test4,
+        "5": test5, 
+        "6": test6,
+        "7": test7
 }
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--test", default="test1", help="The name of the test function you want to run")
+parser.add_argument("--test", default="1", help="The index of the test function you want to run")
 
 args = parser.parse_args()
 
