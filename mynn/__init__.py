@@ -4,3 +4,4 @@ from . import models
 from . import lr_scheduler
 from . import runner
 from . import metric
+from . import augment
