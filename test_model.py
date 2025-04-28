@@ -5,8 +5,19 @@ import gzip
 import matplotlib.pyplot as plt
 import pickle
 
-model = nn.models.Model_MLP()
-model.load_model(r'.\saved_models\best_model_1.pickle')
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--test", default="test1", help="Choose the model from test")
+parser.add_argument("--type", default="MLP", choices=["MLP", "CNN"], help="MLP or CNN")
+
+args = parser.parse_args()
+
+if args.type == "MLP":
+        model = nn.models.Model_MLP()
+else:
+        model = nn.models.Model_CNN()
+model.load_model(f'.\\best_models\\{args.test}.pickle')
 
 test_images_path = r'.\dataset\MNIST\t10k-images-idx3-ubyte.gz'
 test_labels_path = r'.\dataset\MNIST\t10k-labels-idx1-ubyte.gz'
