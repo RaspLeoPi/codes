@@ -340,12 +340,13 @@ class MaxPool2D(Layer):
                         w_end = w_start + self.pool_size
                         
                         window = X[b, c, h_start:h_end, w_start:w_end]
-                        output[b, c, i, j] = np.max(window)
+                        # output[b, c, i, j] = np.max(window)
                         
                         # Store location of max value for backprop
                         max_idx = np.unravel_index(np.argmax(window), window.shape)
                         self.max_indices[b, c, i, j] = [h_start + max_idx[0], 
                                                        w_start + max_idx[1]]
+                        output[b, c, i, j] = window[max_idx]
         
         return output
 
