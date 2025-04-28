@@ -5,14 +5,19 @@ class Model_MLP(Layer):
     """
     A model with linear layers. We provied you with this example about a structure of a model.
     """
-    def __init__(self, size_list=None, act_func=None, lambda_list=None):
+    def __init__(self, size_list=None, act_func=None, lambda_list=None, weight_decay=False, weight_decay_lambda=1e-8):
         self.size_list = size_list
         self.act_func = act_func
 
         if size_list is not None and act_func is not None:
             self.layers = []
             for i in range(len(size_list) - 1):
-                layer = Linear(in_dim=size_list[i], out_dim=size_list[i + 1])
+                layer = Linear(
+                    in_dim=size_list[i], 
+                    out_dim=size_list[i + 1], 
+                    weight_decay=weight_decay, 
+                    weight_decay_lambda=weight_decay_lambda
+                )
                 if lambda_list is not None:
                     layer.weight_decay = True
                     layer.weight_decay_lambda = lambda_list[i]
@@ -58,7 +63,7 @@ class Model_MLP(Layer):
                 layer.weight_decay = param_list[i + 2]['weight_decay']
                 layer.weight_decay_lambda = param_list[i+2]['lambda']
                 if self.act_func == 'Logistic':
-                    raise NotImplemented
+                    raise NotImplementedError
                 elif self.act_func == 'ReLU':
                     layer_f = ReLU()
                 self.layers.append(layer)
@@ -102,23 +107,34 @@ class Model_CNN(Layer):
             
         act_func (str): Activation function ('ReLU' supported)
     """
-    def __init__(self, conv_params=None, linear_size=None, act_func='ReLU'):
+    def __init__(self, conv_params=None, num_classes=10, act_func='ReLU'):
+        """Initialize CNN model with automatic dimension calculation.
+        
+        Args:
+            conv_params: List of convolution layer parameters. Defaults to MNIST architecture.
+            num_classes: Number of output classes. Default 10 for MNIST.
+            act_func: Activation function ('ReLU' supported)
+        """
         # Default MNIST architecture
         if conv_params is None:
             conv_params = [
-                {'in_channels':1, 'out_channels':32, 'kernel_size':3},
-                {'in_channels':32, 'out_channels':64, 'kernel_size':3}
+                {'in_channels':1, 'out_channels':16, 'kernel_size':3},
+                {'in_channels':16, 'out_channels':32, 'kernel_size':3}
             ]
-        if linear_size is None:
-            linear_size = (64*5*5, 10)
             
         self.conv_params = conv_params
-        self.linear_size = linear_size
+        self.num_classes = num_classes
         self.act_func = act_func
         self.layers = []
         
-        # Build convolutional layers
+        # Track output dimensions through layers
+        current_channels = 1  # Default input channels for MNIST
+        current_height = 28   # MNIST input height
+        current_width = 28    # MNIST input width
+        
+        # Build convolutional layers with optional pooling
         for params in conv_params:
+            # Add conv layer
             layer = conv2D(
                 in_channels=params['in_channels'],
                 out_channels=params['out_channels'],
@@ -129,12 +145,39 @@ class Model_CNN(Layer):
                 weight_decay_lambda=params.get('lambda', 1e-8)
             )
             self.layers.append(layer)
+            current_channels = params['out_channels']
+            
+            # Update spatial dimensions
+            current_height = (current_height - params['kernel_size'] + 2 * params.get('padding', 0)) // params.get('stride', 1) + 1
+            current_width = (current_width - params['kernel_size'] + 2 * params.get('padding', 0)) // params.get('stride', 1) + 1
+            
+            # Add activation
             self.layers.append(ReLU())
             
+            # Add pooling if specified for this layer
+            if 'pool_params' in params:
+                pool_size = params['pool_params'].get('pool_size', 2)
+                stride = params['pool_params'].get('stride', pool_size)
+                padding = params['pool_params'].get('padding', 0)
+                self.layers.append(MaxPool2D(
+                    pool_size=pool_size,
+                    stride=stride,
+                    padding=padding
+                ))
+                # Update spatial dimensions after pooling
+                current_height = (current_height - pool_size + 2 * padding) // stride + 1
+                current_width = (current_width - pool_size + 2 * padding) // stride + 1
+        
+        # Calculate flattened dimension for linear layer
+        linear_input_dim = current_channels * current_height * current_width
+        
+        # Add Flatten layer before linear
+        self.layers.append(Flatten())
+        
         # Add final linear layer
         self.layers.append(Linear(
-            in_dim=linear_size[0],
-            out_dim=linear_size[1],
+            in_dim=linear_input_dim,
+            out_dim=num_classes,
             weight_decay='lambda' in conv_params[-1],
             weight_decay_lambda=conv_params[-1].get('lambda', 1e-8)
         ))
@@ -190,7 +233,7 @@ class Model_CNN(Layer):
         self.layers.append(linear_layer)
         
     def save_model(self, save_path):
-        param_list = [self.conv_params, self.linear_size, self.act_func]
+        param_list = [self.conv_params, self.num_classes, self.act_func]
         
         # Save conv layer weights
         for layer in self.layers:
