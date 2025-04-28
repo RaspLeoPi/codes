@@ -141,7 +141,8 @@ class conv2D(Layer):
                 X_slice = X_padded[:, :, h_start:h_end, w_start:w_end]
                 
                 # Vectorized computation across output channels
-                output[:, :, k, l] = np.tensordot(X_slice, self.W, axes=([1,2,3],[1,2,3])) + self.b.squeeze()
+                # output[:, :, k, l] = np.tensordot(X_slice, self.W, axes=([1,2,3],[1,2,3])) + self.b.squeeze()
+                output[:, :, k, l] = np.einsum('ijkl, mjkl -> im', X_slice, self.W) + self.b.squeeze()
         
         return output
 
