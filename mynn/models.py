@@ -218,7 +218,6 @@ class Model_CNN(Layer):
                 in_channels=params['in_channels'],
                 out_channels=params['out_channels'],
                 kernel_size=params['kernel_size'], 
-                act_func=self.act_func, 
                 weight_decay=params.get('weight_decay', False), 
                 weight_decay_lambda=params.get('weight_decay_lambda', 1e-8)
             )
