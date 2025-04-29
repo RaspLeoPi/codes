@@ -76,8 +76,14 @@ class conv2D(Layer):
         
         # Initialize weights and bias using the provided method
         # Weights shape: [out_channels, in_channels, kernel_size, kernel_size]
-        self.W = initialize_method(0, 1, (out_channels, in_channels, kernel_size, kernel_size))
-        self.b = initialize_method(0, 1, (out_channels, 1, 1))  # Bias shape: [out_channels, 1, 1]
+        # Xavier initialization
+        fan_in = in_channels * kernel_size * kernel_size
+        fan_out = out_channels * kernel_size * kernel_size
+        scale = np.sqrt(2.0 / (fan_in + fan_out))
+        # self.W = initialize_method(0, 1, (out_channels, in_channels, kernel_size, kernel_size))
+        # self.b = initialize_method(0, 1, (out_channels, 1, 1))  # Bias shape: [out_channels, 1, 1]
+        self.W = np.random.normal(scale=scale, size=(out_channels, in_channels, kernel_size, kernel_size))
+        self.b = np.zeros((out_channels, 1, 1))
 
         # used in updating parameters in optimizer.py
         self.params = {'W': self.W, 'b': self.b}
@@ -160,6 +166,7 @@ class conv2D(Layer):
         """
         # Extract dimensions
         batch_size, out_channels, new_H, new_W = grads.shape
+        _, in_channels, H, W = self.X.shape
         kernel_size = self.kernel_size
         
         # Apply padding to the input
@@ -182,11 +189,15 @@ class conv2D(Layer):
                 X_regions = X_padded[:, :, h_start:h_end, w_start:w_end]
                 
                 # Vectorized weight gradient update
-                dW += np.tensordot(grads[:, :, k, l], X_regions, axes=([0],[0]))
+                # dW += np.tensordot(grads[:, :, k, l], X_regions, axes=([0],[0]))
+                dW += np.einsum('ij, iklm -> jklm', grads[:, :, k, l], X_regions)
                 
                 # Vectorized input gradient update
-                dX_padded[:, :, h_start:h_end, w_start:w_end] += np.tensordot(
-                    grads[:, :, k, l], self.W, axes=([1],[0])
+                # dX_padded[:, :, h_start:h_end, w_start:w_end] += np.tensordot(
+                #     grads[:, :, k, l], self.W, axes=([1],[0])
+                # )
+                dX_padded[:, :, h_start:h_end, w_start:w_end] += np.einsum(
+                    'ij, jklm -> iklm', grads[:, :, k, l], self.W
                 )
         
         # Extract the gradient of the input without padding
@@ -330,23 +341,21 @@ class MaxPool2D(Layer):
         output = np.zeros((batch, channels, out_h, out_w))
         self.max_indices = np.zeros((batch, channels, out_h, out_w, 2), dtype=np.int32)
         
-        for b in range(batch):
-            for c in range(channels):
-                for i in range(out_h):
-                    for j in range(out_w):
-                        h_start = i * self.stride
-                        h_end = h_start + self.pool_size
-                        w_start = j * self.stride 
-                        w_end = w_start + self.pool_size
-                        
-                        window = X[b, c, h_start:h_end, w_start:w_end]
-                        # output[b, c, i, j] = np.max(window)
-                        
-                        # Store location of max value for backprop
-                        max_idx = np.unravel_index(np.argmax(window), window.shape)
-                        self.max_indices[b, c, i, j] = [h_start + max_idx[0], 
-                                                       w_start + max_idx[1]]
-                        output[b, c, i, j] = window[max_idx]
+        for i in range(out_h):
+            for j in range(out_w):
+                h_start = i * self.stride
+                h_end = h_start + self.pool_size
+                w_start = j * self.stride 
+                w_end = w_start + self.pool_size
+
+                window = X[:, :, h_start:h_end, w_start:w_end]
+                window_flat = window.reshape(batch, channels, -1)
+                max_pos = np.argmax(window_flat, axis=2)
+                max_pos_h = max_pos // self.pool_size
+                max_pos_w = max_pos % self.pool_size
+                
+                self.max_indices[:, :, i, j, 0] = h_start + max_pos_h
+                self.max_indices[:, :, i, j, 1] = w_start + max_pos_w
         
         return output
 
