@@ -107,7 +107,7 @@ class Model_CNN(Layer):
             
         act_func (str): Activation function ('ReLU' supported)
     """
-    def __init__(self, conv_params=None, num_classes=10, act_func='ReLU'):
+    def __init__(self, conv_params=None, num_classes=10, act_func='ReLU', Xavier=False):
         """Initialize CNN model with automatic dimension calculation.
         
         Args:
@@ -142,7 +142,8 @@ class Model_CNN(Layer):
                 stride=params.get('stride', 1),
                 padding=params.get('padding', 0),
                 weight_decay='lambda' in params,
-                weight_decay_lambda=params.get('lambda', 1e-8)
+                weight_decay_lambda=params.get('lambda', 1e-8),
+                Xavier=Xavier
             )
             self.layers.append(layer)
             current_channels = params['out_channels']
