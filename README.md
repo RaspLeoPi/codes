@@ -8,7 +8,8 @@ This small homework project implements neural network structure with MNIST from 
 
 - [ ] Complete the implementation of weight_visualization.py
 - [ ] Write the report
-- [ ] Implement new tests of CNN with fewer epoches
+- [x] Implement new tests of CNN with fewer epoches
+- [x] Check the load_model and save_model method of Model_CNN
 
 ## Structure
 
