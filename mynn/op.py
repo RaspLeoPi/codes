@@ -350,6 +350,8 @@ class MaxPool2D(Layer):
                 
                 self.max_indices[:, :, i, j, 0] = h_start + max_pos_h
                 self.max_indices[:, :, i, j, 1] = w_start + max_pos_w
+
+                output[:, :, i, j] = np.max(window, axis=(2, 3))
         
         return output
 
