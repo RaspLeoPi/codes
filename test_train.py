@@ -64,7 +64,7 @@ def test1():
                 [valid_imgs, valid_labs], 
                 num_epochs=5, 
                 log_iters=100, 
-                save_dir=r'./best_models', 
+                save_dir=r'./saved_models', 
                 model_name='test1'
         )
 
@@ -99,7 +99,7 @@ def test2():
                 [valid_imgs, valid_labs], 
                 num_epochs=5, 
                 log_iters=100, 
-                save_dir=r'./best_models', 
+                save_dir=r'./saved_models', 
                 model_name='test2'
         )
 
@@ -135,7 +135,7 @@ def test3():
                 [valid_imgs, valid_labs], 
                 num_epochs=5, 
                 log_iters=100, 
-                save_dir=r'./best_models', 
+                save_dir=r'./saved_models', 
                 model_name='test3'
         )
 
@@ -178,7 +178,7 @@ def test4():
                 [valid_imgs, valid_labs], 
                 num_epochs=5, 
                 log_iters=100, 
-                save_dir=r'./best_models', 
+                save_dir=r'./saved_models', 
                 model_name='test4'
         )
 
@@ -251,7 +251,7 @@ def test5():
             [valid_imgs_cnn, valid_labs],
             num_epochs=5,
             log_iters=300,              # dev evaluation for every 300 iterations
-            save_dir=r'./best_models',
+            save_dir=r'./saved_models',
             model_name='test5', 
             detail_eval=False
         )
@@ -327,7 +327,7 @@ def test6():
             [valid_imgs_cnn, valid_labs],
             num_epochs=5,
             log_iters=300,              # dev evaluation for every 300 iterations
-            save_dir=r'./best_models',
+            save_dir=r'./saved_models',
             model_name='test6', 
             detail_eval=False
         )
@@ -399,7 +399,7 @@ def test7():
             [valid_imgs_cnn, valid_labs],
             num_epochs=5,
             log_iters=300,              # dev evaluation for every 300 iterations
-            save_dir=r'./best_models',
+            save_dir=r'./saved_models',
             model_name='test7', 
             detail_eval=False
         )
