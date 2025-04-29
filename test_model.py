@@ -8,16 +8,10 @@ import pickle
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--test", default="test1", help="Choose the model from test")
-parser.add_argument("--type", default="MLP", choices=["MLP", "CNN"], help="MLP or CNN")
+parser.add_argument("--test", default="9", help="Choose the model from test")
+parser.add_argument("--type", default="CNN", choices=["MLP", "CNN"], help="MLP or CNN")
 
 args = parser.parse_args()
-
-if args.type == "MLP":
-        model = nn.models.Model_MLP()
-else:
-        model = nn.models.Model_CNN()
-model.load_model(f'.\\best_models\\{args.test}.pickle')
 
 test_images_path = r'.\dataset\MNIST\t10k-images-idx3-ubyte.gz'
 test_labels_path = r'.\dataset\MNIST\t10k-labels-idx1-ubyte.gz'
@@ -31,6 +25,13 @@ with gzip.open(test_labels_path, 'rb') as f:
         test_labs = np.frombuffer(f.read(), dtype=np.uint8)
 
 test_imgs = test_imgs / test_imgs.max()
+
+if args.type == "MLP":
+        model = nn.models.Model_MLP()
+else:
+        model = nn.models.Model_CNN()
+        test_imgs = test_imgs.reshape(num, 1, 28, 28)              # reshape test images
+model.load_model(f'.\\saved_models\\test{args.test}.pickle')
 
 logits = model(test_imgs)
 print(nn.metric.accuracy(logits, test_labs))
