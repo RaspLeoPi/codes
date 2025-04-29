@@ -1,3 +1,62 @@
+# Deep learning with MNIST from scratch
+
+## Introduction
+
+This small homework project implements neural network structure with MNIST from scratch. The special layers are linear layers and convolutional layers. 
+
+## TODO
+
+- [ ] Complete the implementation of weight_visualization.py
+- [ ] Write the report
+- [ ] Implement new tests of CNN with fewer epoches
+
+## Structure
+
+### dateset/MNIST
+
+The dataset, including the training set and validation set. 
+
+### draw_tools
+
+Tools for plotting convergence history and visualizing parameters of neural networks. 
+
+### figs
+
+The plottings of convergence history of the tests. 
+
+### mynn
+
+Core module of self-implemented neural network. Including: 
+1. \_\_init\_\_.py: the initializer
+2. op.py: defines layers of the network, including **linear layer**, **ReLU activation layer**, **Cross Entropy layer**, **convolutional layer**, **maxpooling layer** and a **flattening layer**. 
+3. lr_scheduler.py: defines the learning rate scheduler of the training structure. 
+4. metric.py
+5. augment.py: does data augmentation for CNN tests. 
+6. optimizer.py: defines SGD and MomentGD. 
+7. runner.py: defines the trainer. 
+
+### saved_models
+
+The directory of saving trained models, saved as pickle files that can be loaded for testing. 
+
+### test_models.py
+
+The testing place for existing models. 
+
+### test_train.py
+
+The training place for models. Containing several tests, each with different network structure. 
+
+### weight_visualization.py(TO BE IMPLEMENTED)
+
+The visualizer of weights of the trained models. 
+
+### hyperparameter_search.py
+
+Not implemented. 
+
+---
+
 ### Start Up
 
 First look into the `dataset_explore.ipynb` and get familiar with the data.
@@ -24,6 +83,3 @@ If you want to train the model on your own dataset, just change the values of va
 ### Test the model.
 
 Open test_model.py, specify the saved model's path and the test dataset's path, then run the script, the script will output the accuracy on the test dataset.
-
-
-
