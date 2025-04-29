@@ -1,6 +1,7 @@
 import numpy as np
 import os
 from tqdm import tqdm
+from time import time 
 
 class RunnerM():
     """
@@ -66,7 +67,9 @@ class RunnerM():
 
                 if (iteration) % log_iters == 0:
                     if not detail_eval:
+                        t = time()
                         dev_score, dev_loss = self.evaluate(dev_set)
+                        print(f"Evaluation time: {time() - t}s")
                     print(f"epoch: {epoch}, iteration: {iteration}")
                     print(f"[Train] loss: {trn_loss}, score: {trn_score}")
                     print(f"[Dev] loss: {dev_loss}, score: {dev_score}")
