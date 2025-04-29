@@ -195,7 +195,7 @@ class conv2D(Layer):
                 )
         
         # Extract the gradient of the input without padding
-        dX = dX_padded[:, :, self.padding:-self.padding, self.padding:-self.padding]
+        dX = dX_padded[:, :, self.padding:H+self.padding, self.padding:W+self.padding]
         
         # Apply weight decay if enabled
         if self.weight_decay:
