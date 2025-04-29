@@ -52,29 +52,33 @@ class Model_MLP(Layer):
         self.size_list = param_list[0]
         self.act_func = param_list[1]
 
+        self.layers = []
         for i in range(len(self.size_list) - 1):
-            self.layers = []
-            for i in range(len(self.size_list) - 1):
-                layer = Linear(in_dim=self.size_list[i], out_dim=self.size_list[i + 1])
-                layer.W = param_list[i + 2]['W']
-                layer.b = param_list[i + 2]['b']
-                layer.params['W'] = layer.W
-                layer.params['b'] = layer.b
-                layer.weight_decay = param_list[i + 2]['weight_decay']
-                layer.weight_decay_lambda = param_list[i+2]['lambda']
-                if self.act_func == 'Logistic':
-                    raise NotImplementedError
-                elif self.act_func == 'ReLU':
-                    layer_f = ReLU()
-                self.layers.append(layer)
-                if i < len(self.size_list) - 2:
-                    self.layers.append(layer_f)
+            layer = Linear(in_dim=self.size_list[i], out_dim=self.size_list[i + 1])
+            layer.params['W'] = param_list[i + 2]['W']
+            layer.params['b'] = param_list[i + 2]['b']
+            layer.weight_decay = param_list[i + 2]['weight_decay']
+            layer.weight_decay_lambda = param_list[i+2]['lambda']
+            if self.act_func == 'Logistic':
+                raise NotImplementedError
+            elif self.act_func == 'ReLU':
+                layer_f = ReLU()
+            self.layers.append(layer)
+            if i < len(self.size_list) - 2:
+                self.layers.append(layer_f)
         
     def save_model(self, save_path):
         param_list = [self.size_list, self.act_func]
         for layer in self.layers:
             if layer.optimizable:
-                param_list.append({'W' : layer.params['W'], 'b' : layer.params['b'], 'weight_decay' : layer.weight_decay, 'lambda' : layer.weight_decay_lambda})
+                param_list.append(
+                    {
+                        'W' : layer.params['W'], 
+                        'b' : layer.params['b'], 
+                        'weight_decay' : layer.weight_decay, 
+                        'lambda' : layer.weight_decay_lambda
+                    }
+                )
         
         with open(save_path, 'wb') as f:
             pickle.dump(param_list, f)
@@ -204,53 +208,89 @@ class Model_CNN(Layer):
     def load_model(self, param_list):
         with open(param_list, 'rb') as f:
             param_list = pickle.load(f)
-            
         self.conv_params = param_list[0]
-        self.linear_size = param_list[1]
-        self.act_func = param_list[2]
-        self.layers = []
-        
-        # Reconstruct conv layers
-        for i, params in enumerate(self.conv_params):
+        self.act_func = param_list[1]
+
+        self.layers = []        # initialization of layers
+        for i in range(2, len(param_list) - 1): # exclude the last linear layer
+            params = param_list[i]  # the conv parameters
             layer = conv2D(
                 in_channels=params['in_channels'],
                 out_channels=params['out_channels'],
                 kernel_size=params['kernel_size'],
                 stride=params.get('stride', 1),
-                padding=params.get('padding', 0)
+                padding=params.get('padding', 0),
+                weight_decay='lambda' in params,
+                weight_decay_lambda=params.get('lambda', 1e-8)
             )
-            layer.W = param_list[i+3]['W']
-            layer.b = param_list[i+3]['b']
+            # assignment of key parameters
+            layer.W = params['W']
+            layer.b = params['b']
             self.layers.append(layer)
-            self.layers.append(ReLU())
+
+            # ReLU
+            if self.act_func == 'ReLU':
+                self.layers.append(ReLU())
+            else:
+                raise NotImplementedError
             
-        # Reconstruct linear layer
-        linear_layer = Linear(
-            in_dim=self.linear_size[0],
-            out_dim=self.linear_size[1]
+            # maxpooling
+            if 'pool_params' in params:
+                pool_size = params['pool_params'].get('pool_size', 2)
+                stride = params['pool_params'].get('stride', pool_size)
+                padding = params['pool_params'].get('padding', 0)
+                self.layers.append(MaxPool2D(
+                    pool_size=pool_size,
+                    stride=stride,
+                    padding=padding
+                ))
+        
+        # add flatten layer
+        self.layers.append(Flatten())
+
+        # add final linear layer
+        linear_params = param_list[-1]
+        layer = Linear(
+            in_dim=linear_params['in_dim'],
+            out_dim=linear_params['out_dim'],
+            weight_decay=linear_params['weight_decay'],
+            weight_decay_lambda=linear_params['weight_decay_lambda']
         )
-        linear_layer.params['W'] = param_list[-1]['W']
-        linear_layer.params['b'] = param_list[-1]['b']
-        self.layers.append(linear_layer)
+        layer.params['W'] = linear_params['W']
+        layer.params['b'] = linear_params['b']
+        self.layers.append(layer)
+
         
     def save_model(self, save_path):
-        param_list = [self.conv_params, self.num_classes, self.act_func]
-        
-        # Save conv layer weights
+        param_list = [self.conv_params, self.act_func]
         for layer in self.layers:
-            if hasattr(layer, 'W'):  # conv2D layer
-                param_list.append({
-                    'W': layer.W,
-                    'b': layer.b
-                })
-                
-        # Save linear layer weights
-        for layer in self.layers:
-            if hasattr(layer, 'params'):  # Linear layer
-                param_list.append({
-                    'W': layer.params['W'],
-                    'b': layer.params['b']
-                })
+            if layer.optimizable:
+                if hasattr(layer, 'Xavier'):    # conv layer
+                    param_list.append(
+                        {
+                            'W': layer.params['W'], 
+                            'b': layer.params['b'], 
+                            'weight_decay': layer.weight_decay, 
+                            'weight_decay_lambda': layer.weight_decay_lambda, 
+                            'in_channels': layer.in_channels, 
+                            'out_channels': layer.out_channels, 
+                            'kernel_size': layer.kernel_size, 
+                            'stride': layer.stride, 
+                            'padding': layer.padding, 
+                            'pool_params': {'pool_size': 2, 'stride': 2}    # default config
+                        }
+                )
+                else:           # linear layer
+                    param_list.append(
+                        {
+                            'W': layer.params['W'], 
+                            'b': layer.params['b'], 
+                            'weight_decay': layer.weight_decay, 
+                            'weight_decay_lambda': layer.weight_decay_lambda, 
+                            'in_dim': layer.in_dim, 
+                            'out_dim': layer.out_dim
+                        }
+                    )
         
         with open(save_path, 'wb') as f:
             pickle.dump(param_list, f)
