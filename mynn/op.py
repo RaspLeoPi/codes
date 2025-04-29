@@ -76,14 +76,8 @@ class conv2D(Layer):
         
         # Initialize weights and bias using the provided method
         # Weights shape: [out_channels, in_channels, kernel_size, kernel_size]
-        # Xavier initialization
-        fan_in = in_channels * kernel_size * kernel_size
-        fan_out = out_channels * kernel_size * kernel_size
-        scale = np.sqrt(2.0 / (fan_in + fan_out))
-        # self.W = initialize_method(0, 1, (out_channels, in_channels, kernel_size, kernel_size))
-        # self.b = initialize_method(0, 1, (out_channels, 1, 1))  # Bias shape: [out_channels, 1, 1]
-        self.W = np.random.normal(scale=scale, size=(out_channels, in_channels, kernel_size, kernel_size))
-        self.b = np.zeros((out_channels, 1, 1))
+        self.W = initialize_method(0, 1, (out_channels, in_channels, kernel_size, kernel_size))
+        self.b = initialize_method(0, 1, (out_channels, 1, 1))  # Bias shape: [out_channels, 1, 1]
 
         # used in updating parameters in optimizer.py
         self.params = {'W': self.W, 'b': self.b}
