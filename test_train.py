@@ -400,7 +400,7 @@ def test7():
             num_epochs=5,
             log_iters=300,              # dev evaluation for every 300 iterations
             save_dir=r'./best_models',
-            model_name='test5', 
+            model_name='test7', 
             detail_eval=False
         )
 
