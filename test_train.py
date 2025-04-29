@@ -282,7 +282,7 @@ def test6():
         """
         implementation of CNN with data augmentation
         layers: conv1->maxpool->conv2->maxpool->linear->Softmax->CrossEntropy
-        dimension: 28*28*1->26*26*32->13*13*32->11*11*64->6*6*64->10
+        dimension: 28*28*1->26*26*32->13*13*32->11*11*64->5*5*64->10
         optimizer: SGD
         ...
 
@@ -316,7 +316,8 @@ def test6():
         cnn_model = nn.models.Model_CNN(
             conv_params=conv_params,
             num_classes=10,
-            act_func='ReLU'
+            act_func='ReLU', 
+            Xavier=True
         )
         
         optimizer = nn.optimizer.SGD(init_lr=0.01, model=cnn_model)
@@ -434,7 +435,7 @@ def test8():
         """
         implementation of CNN with Xavier initialization
         layers: conv1->ReLU->maxpool->conv2->ReLU->maxpool->Flatten->linear->Softmax->CrossEntropy
-        dimension: 28*28*1->26*26*32->13*13*32->11*11*64->6*6*64->10
+        dimension: 28*28*1->26*26*32->13*13*32->11*11*64->5*5*64->10
         optimizer: SGD
         ...
         """
