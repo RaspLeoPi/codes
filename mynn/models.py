@@ -212,20 +212,19 @@ class Model_CNN(Layer):
         self.act_func = param_list[1]
 
         self.layers = []        # initialization of layers
-        for i in range(2, len(param_list) - 1): # exclude the last linear layer
-            params = param_list[i]  # the conv parameters
+        for i in range(len(self.conv_params)): 
+            params = self.conv_params[i]  # the conv parameters
             layer = conv2D(
                 in_channels=params['in_channels'],
                 out_channels=params['out_channels'],
-                kernel_size=params['kernel_size'],
-                stride=params.get('stride', 1),
-                padding=params.get('padding', 0),
-                weight_decay='lambda' in params,
-                weight_decay_lambda=params.get('lambda', 1e-8)
+                kernel_size=params['kernel_size'], 
+                act_func=self.act_func, 
+                weight_decay=params.get('weight_decay', False), 
+                weight_decay_lambda=params.get('weight_decay_lambda', 1e-8)
             )
             # assignment of key parameters
-            layer.W = params['W']
-            layer.b = params['b']
+            layer.W = param_list[i+2]['W']
+            layer.b = param_list[i+2]['b']
             self.layers.append(layer)
 
             # ReLU
@@ -250,9 +249,10 @@ class Model_CNN(Layer):
 
         # add final linear layer
         linear_params = param_list[-1]
+        in_dim, out_dim = linear_params['W'].shape
         layer = Linear(
-            in_dim=linear_params['in_dim'],
-            out_dim=linear_params['out_dim'],
+            in_dim=in_dim,
+            out_dim=out_dim,
             weight_decay=linear_params['weight_decay'],
             weight_decay_lambda=linear_params['weight_decay_lambda']
         )
@@ -265,19 +265,19 @@ class Model_CNN(Layer):
         param_list = [self.conv_params, self.act_func]
         for layer in self.layers:
             if layer.optimizable:
-                if hasattr(layer, 'Xavier'):    # conv layer
+                if hasattr(layer, 'in_channels'):    # conv layer
                     param_list.append(
                         {
                             'W': layer.params['W'], 
                             'b': layer.params['b'], 
                             'weight_decay': layer.weight_decay, 
                             'weight_decay_lambda': layer.weight_decay_lambda, 
-                            'in_channels': layer.in_channels, 
-                            'out_channels': layer.out_channels, 
-                            'kernel_size': layer.kernel_size, 
-                            'stride': layer.stride, 
-                            'padding': layer.padding, 
-                            'pool_params': {'pool_size': 2, 'stride': 2}    # default config
+                            # 'in_channels': layer.in_channels, 
+                            # 'out_channels': layer.out_channels, 
+                            # 'kernel_size': layer.kernel_size, 
+                            # 'stride': layer.stride, 
+                            # 'padding': layer.padding, 
+                            # 'pool_params': {'pool_size': 2, 'stride': 2}    # default config
                         }
                 )
                 else:           # linear layer
@@ -287,8 +287,6 @@ class Model_CNN(Layer):
                             'b': layer.params['b'], 
                             'weight_decay': layer.weight_decay, 
                             'weight_decay_lambda': layer.weight_decay_lambda, 
-                            'in_dim': layer.in_dim, 
-                            'out_dim': layer.out_dim
                         }
                     )
         
