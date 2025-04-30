@@ -464,7 +464,8 @@ def test8():
         cnn_model = nn.models.Model_CNN(
             conv_params=conv_params,
             num_classes=10,
-            act_func='ReLU'
+            act_func='ReLU', 
+            Xavier=True
         )
         
         optimizer = nn.optimizer.SGD(init_lr=0.01, model=cnn_model)
@@ -537,7 +538,8 @@ def test9():
         cnn_model = nn.models.Model_CNN(
             conv_params=conv_params,
             num_classes=10,
-            act_func='ReLU'
+            act_func='ReLU', 
+            Xavier=True
         )
 
         optimizer = nn.optimizer.SGD(init_lr=0.01, model=cnn_model)
