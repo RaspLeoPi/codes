@@ -567,7 +567,7 @@ def test10():
         """
         implementation of CNN with Xavier initialization
         layers: conv1->ReLU->maxpool->conv2->ReLU->maxpool->Flatten->linear->Softmax->CrossEntropy
-        dimension: 28*28*1->24*24*16->12*12*16->8*8*32->4*4*32->10
+        dimension: 28*28*1->26*26*16->13*13*16->11*11*32->5*5*32->10
         optimizer: SGD
         ...
         """
@@ -717,6 +717,88 @@ def test11():
         plt.show()
         pass
 
+def test12():
+        """
+        implementation of CNN with bigger kernel and data augmentation, which doubles the dataset
+        layers: conv1->maxpool->conv2->maxpool->linear->Softmax->CrossEntropy
+        dimension: 28*28*1->24*24*16->12*12*16->8*8*32->4*4*32->10
+        optimizer: SGD
+        ...
+
+        """
+        global train_imgs, train_labs
+        model_name = "test12"
+        # data augmentation first
+        aug_train_imgs = np.array([nn.augment.augment_image(train_imgs[i,]) for i in range(train_imgs.shape[0])])
+        # doubling the dataset
+        aug_train_imgs = np.concatenate((train_imgs, aug_train_imgs), axis=0)
+        train_labs = np.concatenate((train_labs, train_labs), axis=0)
+        # Reshape input from (batch, 784) to (batch, 1, 28, 28)
+        train_imgs_cnn = aug_train_imgs.reshape(-1, 1, 28, 28)
+        valid_imgs_cnn = valid_imgs.reshape(-1, 1, 28, 28)
+
+        # Define CNN architecture with pooling
+        conv_params = [
+            {
+                'in_channels': 1,
+                'out_channels': 16,
+                'kernel_size': 5,
+                'pool_params': {'pool_size': 2, 'stride': 2}
+            },
+            {
+                'in_channels': 16,
+                'out_channels': 32, 
+                'kernel_size': 5,
+                'pool_params': {'pool_size': 2, 'stride': 2}
+            }
+        ]
+        
+        cnn_model = nn.models.Model_CNN(
+            conv_params=conv_params,
+            num_classes=10,
+            act_func='ReLU', 
+            Xavier=True
+        )
+        
+        optimizer = nn.optimizer.SGD(init_lr=0.01, model=cnn_model)
+        scheduler = nn.lr_scheduler.MultiStepLR(
+            optimizer=optimizer,
+            milestones=[800, 2400, 4000],
+            gamma=0.5
+        )
+        loss_fn = nn.op.MultiCrossEntropyLoss(
+            model=cnn_model,
+            max_classes=train_labs.max()+1
+        )
+
+        runner = nn.runner.RunnerM(
+            cnn_model,
+            optimizer,
+            nn.metric.accuracy,
+            loss_fn,
+            scheduler=scheduler
+        )
+
+        runner.train(
+            [train_imgs_cnn, train_labs],
+            [valid_imgs_cnn, valid_labs],
+            num_epochs=5,
+            log_iters=300,              # dev evaluation for every 300 iterations
+            save_dir=r'./saved_models',
+            model_name=model_name, 
+            detail_eval=False
+        )
+
+        _, axes = plt.subplots(1, 2)
+        axes.reshape(-1)
+        _.set_tight_layout(1)
+        plot(runner, axes)
+        plt.savefig(f"./training_history/{model_name}.png")
+
+        plt.show()
+        pass
+        
+
 test_mapping = {
         "1": test1, 
         "2": test2, 
@@ -728,7 +810,8 @@ test_mapping = {
         "8": test8, 
         "9": test9, 
         "10": test10, 
-        "11": test11
+        "11": test11, 
+        "12": test12
 }
 
 parser = argparse.ArgumentParser()
