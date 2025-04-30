@@ -8,3 +8,4 @@ dataset/
 # some other files
 idx.pickle
 .vscode/
+log
