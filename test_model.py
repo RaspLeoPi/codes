@@ -51,7 +51,7 @@ def best_test():
                 accuracy_dict[name] = nn.metric.accuracy(logits, test_labs)
                 print(f"The accuracy of the model in {name}: {accuracy_dict[name]}")
         # five CNN models
-        for i in range(4, 11):
+        for i in range(4, 12):
                 name = "test" + str(i + 1)
                 model = nn.models.Model_CNN()
                 model.load_model(f'.\\saved_models\\{name}.pickle')
