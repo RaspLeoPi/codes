@@ -1,4 +1,4 @@
-# Deep learning with MNIST from scratch
+# Self-implemented deep learning with MNIST
 
 ## Introduction
 
@@ -6,7 +6,7 @@ This small homework project implements neural network structure with MNIST from 
 
 ## TODO
 
-- [ ] Complete the implementation of weight_visualization.py
+- [x] Complete the implementation of weight_visualization.py
 - [ ] Write the report
 - [x] Implement new tests of CNN with fewer epoches
 - [x] Check the load_model and save_model method of Model_CNN
