@@ -93,8 +93,8 @@ parser.add_argument(
     "label", 
     choices=["1", "2"], 
     help="""
-        The label of visualization
-        - label 1: the visualization of the linear layer of MLP of test1
+        The label of visualization: 
+        - label 1: the visualization of the linear layer of MLP of test1;
         - lable 2: the visualization of the convolutional layer of CNN of test 7
         """
 )
