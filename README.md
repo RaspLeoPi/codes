@@ -7,10 +7,10 @@ This small homework project implements neural network structure with MNIST from 
 ## TODO
 
 - [x] Complete the implementation of weight_visualization.py
-- [ ] Write the report
+- [x] Write the report
 - [x] Implement new tests of CNN with fewer epoches
 - [x] Check the load_model and save_model method of Model_CNN
-- [ ] Add usage of py files
+- [x] Add usage of py files
 
 ## Structure
 
