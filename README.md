@@ -1,6 +1,6 @@
 # Self-implemented deep learning with MNIST
 
-## Introduction
+## Description
 
 This small homework project implements neural network structure with MNIST from scratch. The special layers are linear layers and convolutional layers. 
 
@@ -10,10 +10,11 @@ This small homework project implements neural network structure with MNIST from 
 - [ ] Write the report
 - [x] Implement new tests of CNN with fewer epoches
 - [x] Check the load_model and save_model method of Model_CNN
+- [ ] Add usage of py files
 
 ## Structure
 
-### dateset/MNIST
+### dataset/MNIST
 
 The dataset, including the training set and validation set. 
 
@@ -21,9 +22,13 @@ The dataset, including the training set and validation set.
 
 Tools for plotting convergence history and visualizing parameters of neural networks. 
 
-### figs
+### training_history
 
 The plottings of convergence history of the tests. 
+
+### visualization
+
+Visualization results of the trained model weights. 
 
 ### mynn
 
@@ -40,17 +45,35 @@ Core module of self-implemented neural network. Including:
 
 The directory of saving trained models, saved as pickle files that can be loaded for testing. 
 
+### best_models
+
+The directory of saving trained models, saved as pickle files that can be loaded for testing. 
+
 ### test_models.py
 
 The testing place for existing models. 
+
+usage: test_model.py [-h] [--test TEST] [--type {MLP,CNN}] {single,multiple,best}
 
 ### test_train.py
 
 The training place for models. Containing several tests, each with different network structure. 
 
-### weight_visualization.py(TO BE IMPLEMENTED)
+usage: test_train.py [-h] [--test TEST]
 
-The visualizer of weights of the trained models. 
+options:
+  -h, --help   show this help message and exit
+  --test TEST  The index of the test function you want to run
+
+### weight_visualization.py
+
+The visualizer of weights of the trained models.
+
+usage: weight_visualization.py [-h] {1,2}
+
+positional arguments:
+  {1,2}       The label of visualization - label 1: the visualization of the linear layer of MLP of test1 -
+              lable 2: the visualization of the convolutional layer of CNN of test 7
 
 ### hyperparameter_search.py
 
