@@ -76,7 +76,7 @@ def test1():
         axes.reshape(-1)
         _.set_tight_layout(1)
         plot(runner, axes)
-        plt.savefig(f"./figs/{model_name}.png")
+        plt.savefig(f"./training_history/{model_name}.png")
 
         plt.show()
 
@@ -114,7 +114,7 @@ def test2():
         axes.reshape(-1)
         _.set_tight_layout(1)
         plot(runner, axes)
-        plt.savefig(f"./figs/{model_name}.png")
+        plt.savefig(f"./training_history/{model_name}.png")
 
         plt.show()
 
@@ -153,7 +153,7 @@ def test3():
         axes.reshape(-1)
         _.set_tight_layout(1)
         plot(runner, axes)
-        plt.savefig(f"./figs/{model_name}.png")
+        plt.savefig(f"./training_history/{model_name}.png")
 
         plt.show()        
 
@@ -198,7 +198,7 @@ def test4():
         axes.reshape(-1)
         _.set_tight_layout(1)
         plot(runner, axes)
-        plt.savefig(f"./figs/{model_name}.png")
+        plt.savefig(f"./training_history/{model_name}.png")
 
         plt.show()
         pass
@@ -274,7 +274,7 @@ def test5():
         axes.reshape(-1)
         _.set_tight_layout(1)
         plot(runner, axes)
-        plt.savefig(f"./figs/{model_name}.png")
+        plt.savefig(f"./training_history/{model_name}.png")
 
         plt.show()
 
@@ -353,7 +353,7 @@ def test6():
         axes.reshape(-1)
         _.set_tight_layout(1)
         plot(runner, axes)
-        plt.savefig(f"./figs/{model_name}.png")
+        plt.savefig(f"./training_history/{model_name}.png")
 
         plt.show()
 
@@ -426,7 +426,7 @@ def test7():
         axes.reshape(-1)
         _.set_tight_layout(1)
         plot(runner, axes)
-        plt.savefig("./figs/test7.png")
+        plt.savefig("./training_history/test7.png")
 
         plt.show()
         pass
@@ -501,7 +501,7 @@ def test8():
         axes.reshape(-1)
         _.set_tight_layout(1)
         plot(runner, axes)
-        plt.savefig(f"./figs/{model_name}.png")
+        plt.savefig(f"./training_history/{model_name}.png")
 
         plt.show()        
 
@@ -575,7 +575,7 @@ def test9():
         axes.reshape(-1)
         _.set_tight_layout(1)
         plot(runner, axes)
-        plt.savefig(f"./figs/{model_name}.png")
+        plt.savefig(f"./training_history/{model_name}.png")
 
         plt.show()     
 
