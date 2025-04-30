@@ -49,7 +49,6 @@ def test1():
         ...
 
         """
-        print("=== test 1 is on the way ===")
         model_name = "test1"
 
         linear_model = nn.models.Model_MLP([train_imgs.shape[-1], 600, 10], 'ReLU', [1e-4, 1e-4])
@@ -86,7 +85,6 @@ def test2():
         ...
 
         """
-        print("=== test 2 is on the way ===")
         model_name = "test2"
 
         linear_model = nn.models.Model_MLP([train_imgs.shape[-1], 600, 10], 'ReLU', [1e-4, 1e-4])
@@ -124,7 +122,6 @@ def test3():
         ...
 
         """
-        print("=== test 3 is on the way ===")
         model_name = "test3"
 
         linear_model = nn.models.Model_MLP([train_imgs.shape[-1], 480, 10], 'ReLU', [1e-4, 1e-4])
@@ -162,7 +159,6 @@ def test4():
         ...
 
         """
-        print("=== test 4 is on the way ===")
         model_name = "test4"
 
         linear_model = nn.models.Model_MLP(
@@ -206,7 +202,6 @@ def test5():
         optimizer: SGD
         ...
         """
-        print("=== test 5 is on the way ===")
         model_name = "test5"
         # Reshape input from (batch, 784) to (batch, 1, 28, 28)
         train_imgs_cnn = train_imgs.reshape(-1, 1, 28, 28)
@@ -280,7 +275,6 @@ def test6():
         ...
 
         """
-        print("=== test 6 is on the way ===")
         model_name = "test6"
         # data augmentation first
         aug_train_imgs = np.array([nn.augment.augment_image(train_imgs[i,]) for i in range(train_imgs.shape[0])])
@@ -358,7 +352,6 @@ def test7():
         optimizer: SGD
         ...
         """
-        print("=== test 7 is on the way ===")
         # Reshape input from (batch, 784) to (batch, 1, 28, 28)
         train_imgs_cnn = train_imgs.reshape(-1, 1, 28, 28)
         valid_imgs_cnn = valid_imgs.reshape(-1, 1, 28, 28)
@@ -432,7 +425,6 @@ def test8():
         optimizer: SGD
         ...
         """
-        print("=== test 8 is on the way ===")
         model_name = "test8"
         # Reshape input from (batch, 784) to (batch, 1, 28, 28)
         train_imgs_cnn = train_imgs.reshape(-1, 1, 28, 28)
@@ -506,7 +498,6 @@ def test9():
         optimizer: SGD
         ...
         """
-        print("=== test 9 is on the way ===")
         model_name = "test9"
         # Reshape input from (batch, 784) to (batch, 1, 28, 28)
         train_imgs_cnn = train_imgs.reshape(-1, 1, 28, 28)
@@ -580,7 +571,6 @@ def test10():
         optimizer: SGD
         ...
         """
-        print("=== test 10 is on the way ===")
         model_name = "test10"
         # Reshape input from (batch, 784) to (batch, 1, 28, 28)
         train_imgs_cnn = train_imgs.reshape(-1, 1, 28, 28)
@@ -656,7 +646,6 @@ def test11():
 
         """
         global train_imgs, train_labs
-        print("=== test 11 is on the way ===")
         model_name = "test11"
         # data augmentation first
         aug_train_imgs = np.array([nn.augment.augment_image(train_imgs[i,]) for i in range(train_imgs.shape[0])])
