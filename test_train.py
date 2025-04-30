@@ -202,7 +202,7 @@ def test5():
         """
         implementation of CNN with default initialization
         layers: conv1->ReLU->maxpool->conv2->ReLU->maxpool->Flatten->linear->Softmax->CrossEntropy
-        dimension: 28*28*1->26*26*16->13*13*16->11*11*32->5*5*32->10
+        dimension: 28*28*1->26*26*32->13*13*32->11*11*64->5*5*64->10
         optimizer: SGD
         ...
         """
@@ -275,7 +275,7 @@ def test6():
         """
         implementation of CNN with data augmentation
         layers: conv1->maxpool->conv2->maxpool->linear->Softmax->CrossEntropy
-        dimension: 28*28*1->26*26*16->13*13*16->11*11*32->5*5*32->10
+        dimension: 28*28*1->26*26*32->13*13*32->11*11*64->5*5*64->10
         optimizer: SGD
         ...
 
@@ -428,7 +428,7 @@ def test8():
         """
         implementation of CNN with Xavier initialization, larger kernel and only one epoch
         layers: conv1->ReLU->maxpool->conv2->ReLU->maxpool->Flatten->linear->Softmax->CrossEntropy
-        dimension: 28*28*1->26*26*16->13*13*16->11*11*32->5*5*32->10
+        dimension: 28*28*1->26*26*32->13*13*32->11*11*64->5*5*64->10
         optimizer: SGD
         ...
         """
@@ -557,7 +557,7 @@ def test9():
         runner.train(
             [train_imgs_cnn, train_labs],
             [valid_imgs_cnn, valid_labs],
-            num_epochs=5,
+            num_epochs=1,
             log_iters=300,              # dev evaluation for every 300 iterations
             save_dir=r'./saved_models',
             model_name=model_name, 
