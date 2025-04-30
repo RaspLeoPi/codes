@@ -202,7 +202,7 @@ def test5():
         """
         implementation of CNN with default initialization
         layers: conv1->ReLU->maxpool->conv2->ReLU->maxpool->Flatten->linear->Softmax->CrossEntropy
-        dimension: 28*28*1->26*26*32->13*13*32->11*11*64->6*6*64->10
+        dimension: 28*28*1->26*26*32->13*13*32->11*11*64->5*5*64->10
         optimizer: SGD
         ...
         """
