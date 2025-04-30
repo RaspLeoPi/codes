@@ -49,6 +49,7 @@ def best_test():
                 
                 logits = model(test_imgs)
                 accuracy_dict[name] = nn.metric.accuracy(logits, test_labs)
+                print(f"The accuracy of the model in {name}: {accuracy_dict[name]}")
         # five CNN models
         for i in range(4, 9):
                 name = "test" + str(i + 1)
@@ -58,6 +59,7 @@ def best_test():
 
                 logits = model(test_imgs)
                 accuracy_dict[name] = nn.metric.accuracy(logits, test_labs)
+                print(f"The accuracy of the model in {name}: {accuracy_dict[name]}")
         
         best_test = max(accuracy_dict, key=accuracy_dict.get)
         print(f"The test that produces the best model: {best_test}")
@@ -73,11 +75,11 @@ def test_best_model():
         global test_imgs
         model = nn.models.Model_MLP()
         try: 
-                model.model.load_model(f'.\\best_models\\best_model.pickle')
+                model.load_model(f'.\\best_models\\best_model.pickle')
         except:
                 # use CNN instead
                 model = nn.models.Model_CNN()
-                model.model.load_model(f'.\\best_models\\best_model.pickle')
+                model.load_model(f'.\\best_models\\best_model.pickle')
                 test_imgs = test_imgs.reshape(num, 1, 28, 28)
         finally: 
                 logits = model(test_imgs)
