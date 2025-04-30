@@ -153,7 +153,6 @@ class conv2D(Layer):
                 X_slice = X_padded[:, :, h_start:h_end, w_start:w_end]
                 
                 # Vectorized computation across output channels
-                # output[:, :, k, l] = np.tensordot(X_slice, self.W, axes=([1,2,3],[1,2,3])) + self.b.squeeze()
                 output[:, :, k, l] = np.einsum('ijkl, mjkl -> im', X_slice, self.W) + self.b.squeeze()
         
         return output
@@ -195,13 +194,9 @@ class conv2D(Layer):
                 X_regions = X_padded[:, :, h_start:h_end, w_start:w_end]
                 
                 # Vectorized weight gradient update
-                # dW += np.tensordot(grads[:, :, k, l], X_regions, axes=([0],[0]))
                 dW += np.einsum('ij, iklm -> jklm', grads[:, :, k, l], X_regions)
                 
                 # Vectorized input gradient update
-                # dX_padded[:, :, h_start:h_end, w_start:w_end] += np.tensordot(
-                #     grads[:, :, k, l], self.W, axes=([1],[0])
-                # )
                 dX_padded[:, :, h_start:h_end, w_start:w_end] += np.einsum(
                     'ij, jklm -> iklm', grads[:, :, k, l], self.W
                 )
@@ -429,9 +424,6 @@ class Flatten(Layer):
         return X.reshape(X.shape[0], -1)
         
     def backward(self, grad):
-        # Gradient flows backward by reshaping to original input dimensions
-        # This is mathematically correct since:
-        # ∂L/∂X_ijk... = ∂L/∂Y_ij where Y = flatten(X)
         return grad.reshape(self.input_shape)
 
 class L2Regularization(Layer):

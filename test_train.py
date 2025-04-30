@@ -41,8 +41,6 @@ train_labs = train_labs[10000:]
 train_imgs = train_imgs / train_imgs.max()
 valid_imgs = valid_imgs / valid_imgs.max()
 
-
-# best accuracy performance: 0.93590
 def test1():
         """
         layers: linear->ReLU->linear->Softmax->CrossEntropy
@@ -80,7 +78,6 @@ def test1():
 
         plt.show()
 
-# best accuracy performance: 0.93840
 def test2():
         """
         layers: linear->ReLU->linear->Softmax->CrossEntropy
@@ -118,7 +115,6 @@ def test2():
 
         plt.show()
 
-# best accuracy performance: 0.9348
 def test3():
         """
         change the number of neurons to 480
@@ -157,7 +153,6 @@ def test3():
 
         plt.show()        
 
-# best accuracy performance: 
 def test4():
         """
         use l2 regularization (weight decay)
@@ -203,8 +198,6 @@ def test4():
         plt.show()
         pass
 
-# with default initialization method, the learning rate may be too large, 
-# resulting in slow convergence rate
 def test5():
         """
         implementation of CNN with default initialization
