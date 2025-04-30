@@ -44,7 +44,7 @@ class RunnerM():
             X = X[idx]
             y = y[idx]
 
-            for iteration in range(int(X.shape[0] / self.batch_size) + 1):
+            for iteration in range(int(np.ceil(X.shape[0] / self.batch_size))):
                 train_X = X[iteration * self.batch_size : (iteration+1) * self.batch_size]
                 train_y = y[iteration * self.batch_size : (iteration+1) * self.batch_size]
 
